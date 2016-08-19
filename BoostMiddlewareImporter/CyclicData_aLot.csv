@@ -1,0 +1,6 @@
+Zyklus;Menge;Name;Wert;Equipment
+900;100;Temp;20,5;Heizkreis
+900;100;Temp2;50,0;Kessel
+60;2;Druck;150;Kessel
+15;10;Drehzahl;3000;Kessel
+1;1;Schalter;ein;Kessel

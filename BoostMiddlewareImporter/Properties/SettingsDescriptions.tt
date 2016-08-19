@@ -1,0 +1,64 @@
+﻿<#@ template language="C#" hostspecific="True" #>
+<#@ output extension="txt" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Xml" #>
+<#@ import namespace="System.Xml" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.IO" #>
+<!--
+  =========================================
+  Documentation of the configuration values (auto-generated from the .settings-file, do not change)
+  =========================================
+
+<#= GetSettingsClassName() #>
+<#
+    foreach (Tuple<string,string> name in this.GetSettingsAndDescriptions()) {#>
+  <#=name.Item1#>
+    <#=name.Item2#>  
+
+<#}#> 
+-->
+<#+
+
+    public string GetSettingsClassName() {
+        XmlDocument doc = new XmlDocument();
+
+		string absolutePath = this.Host.ResolvePath("Settings.settings");
+
+        doc.Load(absolutePath);
+
+		XmlNode rootnode = doc.DocumentElement;
+
+		return String.Format("{0}.{1}", rootnode.Attributes["GeneratedClassNamespace"].InnerText, rootnode.Attributes["GeneratedClassName"].InnerText);
+	}
+
+    public List<Tuple<string,string>> GetSettingsAndDescriptions()
+    {
+        List<Tuple<string,string>> result = new List<Tuple<string,string>>(); 
+
+        XmlDocument doc = new XmlDocument();
+
+		string absolutePath = this.Host.ResolvePath("Settings.settings");
+
+        doc.Load(absolutePath);
+
+		// Add the namespace.
+		XmlNamespaceManager nsmgr = new XmlNamespaceManager(doc.NameTable);
+		nsmgr.AddNamespace("s", "http://schemas.microsoft.com/VisualStudio/2004/01/settings");
+
+        foreach (XmlNode node in doc.SelectNodes("/s:SettingsFile/s:Settings/s:Setting", nsmgr))
+        {
+		    var descAttrib = node.Attributes["Description"];
+			string desc = String.Empty;
+			if (descAttrib != null) {
+				desc = descAttrib.InnerText;
+			}
+
+            result.Add(new Tuple<string,string>(node.Attributes["Name"].InnerText, desc));
+        }
+
+        return result;
+
+    }
+
+#>

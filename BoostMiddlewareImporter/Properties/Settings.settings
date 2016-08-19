@@ -1,0 +1,60 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="BoostMiddlewareImporter.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="MaxDegreeOfParallelism" Description="PERF; number of concurrent threads to transform the messages" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="TableBulkBatchSize" Description="PERF; SQLServer/RavenDB, chunk a batch by this number of records and send them to db even when batch has not finished yet" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">5000</Value>
+    </Setting>
+    <Setting Name="ThreadPoolPriority_DBInsert" Description="PERF; Task Priority of the db-insert-task when scheduled on the default thread pool" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="ThreadPoolPriority_Transformation" Description="PERF; task priority of the message transformation task scheduled on the default thread pool" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">10</Value>
+    </Setting>
+    <Setting Name="TreadPoolPriority_TCPServer" Description="PERF; task priority of the tcp server tasks scheduled on the default thread pool" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">100</Value>
+    </Setting>
+    <Setting Name="TCPServer_StatisticsPerMessagesCount" Description="UI; interval of messages per client that trigger statistics generation, use low value when the tcp client does not send a message per second" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">2</Value>
+    </Setting>
+    <Setting Name="TCPServer_PostMessageToNextBlock" Description="when false, the received messages are not sent to the next hop" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="ThreadPoolForDBInsert" Description="PERF; when false, the db-insert-tasks schedules on a thread with highest priority" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="TCPServer_UseThreadPool" Description="PERF; If False, the TCP Servers schedules on Tasks on threads with lowest priority" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="BoundedCapacity" Description="DUR; Size of the buffer of each TPLDataflow block" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">120000</Value>
+    </Setting>
+    <Setting Name="CyclicDataFile" Description="configuration for the cyclicdata generator is read from this file" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">cyclicData.csv</Value>
+    </Setting>
+    <Setting Name="CyclicDataFilePeriod" Description="configuration for the perioddata generator is read from this file" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">cyclicDataPeriod.csv</Value>
+    </Setting>
+    <Setting Name="MaxDegreeOfParallelismDBInsert" Description="PERF; Number of concurrent threads that bulkinsert the messages in the database, keep to 1 for Cassandra and RavenDB (DB Access API might not be threadsafe)" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">100</Value>
+    </Setting>
+    <Setting Name="TableBulkInsertSize" Description="PERF; Group this number of records before starting a bulk insert, use max 2000 for cassandra because the byte-size of a batch request is limited https://issues.apache.org/jira/browse/CASSANDRA-6487" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">200</Value>
+    </Setting>
+    <Setting Name="BoundedCapacity_DbInsert" Description="max size of the input queue of the db import action" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">150</Value>
+    </Setting>
+    <Setting Name="CyclicPeriodDurationMinutes" Description="When using the PeriodMessageGenerator, define the number of minutes that should be generated" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">1440</Value>
+    </Setting>
+    <Setting Name="MaxDegreeOfParallelismAvgCalc" Description="number of parallel task triggering the calculation of averaging the documents" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">10</Value>
+    </Setting>
+    <Setting Name="LoggingMessageCacheSize" Description="number of messages to cache for showing every second" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">50</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

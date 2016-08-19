@@ -1,0 +1,62 @@
+﻿<!--
+  =========================================
+  Documentation of the configuration values (auto-generated from the .settings-file, do not change)
+  =========================================
+
+BoostMiddlewareImporter.Properties.Settings
+  MaxDegreeOfParallelism
+    PERF; number of concurrent threads to transform the messages  
+
+  TableBulkBatchSize
+    PERF; SQLServer/RavenDB, chunk a batch by this number of records and send them to db even when batch has not finished yet  
+
+  ThreadPoolPriority_DBInsert
+    PERF; Task Priority of the db-insert-task when scheduled on the default thread pool  
+
+  ThreadPoolPriority_Transformation
+    PERF; task priority of the message transformation task scheduled on the default thread pool  
+
+  TreadPoolPriority_TCPServer
+    PERF; task priority of the tcp server tasks scheduled on the default thread pool  
+
+  TCPServer_StatisticsPerMessagesCount
+    UI; interval of messages per client that trigger statistics generation, use low value when the tcp client does not send a message per second  
+
+  TCPServer_PostMessageToNextBlock
+    when false, the received messages are not sent to the next hop  
+
+  ThreadPoolForDBInsert
+    PERF; when false, the db-insert-tasks schedules on a thread with highest priority  
+
+  TCPServer_UseThreadPool
+    PERF; If False, the TCP Servers schedules on Tasks on threads with lowest priority  
+
+  BoundedCapacity
+    DUR; Size of the buffer of each TPLDataflow block  
+
+  CyclicDataFile
+    configuration for the cyclicdata generator is read from this file  
+
+  CyclicDataFilePeriod
+    configuration for the perioddata generator is read from this file  
+
+  MaxDegreeOfParallelismDBInsert
+    PERF; Number of concurrent threads that bulkinsert the messages in the database, keep to 1 for Cassandra and RavenDB (DB Access API might not be threadsafe)  
+
+  TableBulkInsertSize
+    PERF; Group this number of records before starting a bulk insert, use max 2000 for cassandra because the byte-size of a batch request is limited https://issues.apache.org/jira/browse/CASSANDRA-6487  
+
+  BoundedCapacity_DbInsert
+    max size of the input queue of the db import action  
+
+  CyclicPeriodDurationMinutes
+    When using the PeriodMessageGenerator, define the number of minutes that should be generated  
+
+  MaxDegreeOfParallelismAvgCalc
+    number of parallel task triggering the calculation of averaging the documents  
+
+  LoggingMessageCacheSize
+    number of messages to cache for showing every second  
+
+ 
+-->
