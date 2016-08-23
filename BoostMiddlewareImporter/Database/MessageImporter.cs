@@ -264,7 +264,7 @@ namespace BoostMiddlewareImporter.Database
             }
             else
             {
-                Console.Write(".");
+                //Console.Write("."); //might take to much performance
             }
         }
 

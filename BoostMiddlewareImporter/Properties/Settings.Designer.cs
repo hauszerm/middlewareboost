@@ -186,35 +186,6 @@ namespace BoostMiddlewareImporter.Properties {
         }
         
         /// <summary>
-        /// PERF; Number of concurrent threads that bulkinsert the messages in the database, keep to 1 for Cassandra and RavenDB (DB Access API might not be threadsafe)
-        /// </summary>
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Configuration.SettingsDescriptionAttribute("PERF; Number of concurrent threads that bulkinsert the messages in the database, " +
-            "keep to 1 for Cassandra and RavenDB (DB Access API might not be threadsafe)")]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("100")]
-        public int MaxDegreeOfParallelismDBInsert {
-            get {
-                return ((int)(this["MaxDegreeOfParallelismDBInsert"]));
-            }
-        }
-        
-        /// <summary>
-        /// PERF; Group this number of records before starting a bulk insert, use max 2000 for cassandra because the byte-size of a batch request is limited https://issues.apache.org/jira/browse/CASSANDRA-6487
-        /// </summary>
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Configuration.SettingsDescriptionAttribute("PERF; Group this number of records before starting a bulk insert, use max 2000 fo" +
-            "r cassandra because the byte-size of a batch request is limited https://issues.a" +
-            "pache.org/jira/browse/CASSANDRA-6487")]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("200")]
-        public int TableBulkInsertSize {
-            get {
-                return ((int)(this["TableBulkInsertSize"]));
-            }
-        }
-        
-        /// <summary>
         /// max size of the input queue of the db import action
         /// </summary>
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
@@ -224,20 +195,6 @@ namespace BoostMiddlewareImporter.Properties {
         public int BoundedCapacity_DbInsert {
             get {
                 return ((int)(this["BoundedCapacity_DbInsert"]));
-            }
-        }
-        
-        /// <summary>
-        /// When using the PeriodMessageGenerator, define the number of minutes that should be generated
-        /// </summary>
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Configuration.SettingsDescriptionAttribute("When using the PeriodMessageGenerator, define the number of minutes that should b" +
-            "e generated")]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1440")]
-        public int CyclicPeriodDurationMinutes {
-            get {
-                return ((int)(this["CyclicPeriodDurationMinutes"]));
             }
         }
         
@@ -264,6 +221,58 @@ namespace BoostMiddlewareImporter.Properties {
         public int LoggingMessageCacheSize {
             get {
                 return ((int)(this["LoggingMessageCacheSize"]));
+            }
+        }
+        
+        /// <summary>
+        /// PERF; Number of concurrent threads that bulkinsert the messages in the database, keep to 1 for Cassandra and RavenDB (DB Access API might not be threadsafe)
+        /// </summary>
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.SettingsDescriptionAttribute("PERF; Number of concurrent threads that bulkinsert the messages in the database, " +
+            "keep to 1 for Cassandra and RavenDB (DB Access API might not be threadsafe)")]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public int MaxDegreeOfParallelismDBInsert {
+            get {
+                return ((int)(this["MaxDegreeOfParallelismDBInsert"]));
+            }
+        }
+        
+        /// <summary>
+        /// PERF; Group this number of records before starting a bulk insert, use max 2000 for cassandra because the byte-size of a batch request is limited https://issues.apache.org/jira/browse/CASSANDRA-6487
+        /// </summary>
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.SettingsDescriptionAttribute("PERF; Group this number of records before starting a bulk insert, use max 2000 fo" +
+            "r cassandra because the byte-size of a batch request is limited https://issues.a" +
+            "pache.org/jira/browse/CASSANDRA-6487")]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int TableBulkInsertSize {
+            get {
+                return ((int)(this["TableBulkInsertSize"]));
+            }
+        }
+        
+        /// <summary>
+        /// When using the PeriodMessageGenerator, define the number of minutes that should be generated
+        /// </summary>
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.SettingsDescriptionAttribute("When using the PeriodMessageGenerator, define the number of minutes that should b" +
+            "e generated")]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("60")]
+        public int CyclicPeriodDurationMinutes {
+            get {
+                return ((int)(this["CyclicPeriodDurationMinutes"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool CalcAvgAfterInsert {
+            get {
+                return ((bool)(this["CalcAvgAfterInsert"]));
             }
         }
     }

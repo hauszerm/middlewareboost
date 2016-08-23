@@ -80,10 +80,16 @@ namespace BoostMiddlewareImporter.Database
 
 
         public bool QueryPeriod { get; set; }
+
+        /// <summary>
+        /// only when we insert more than this number of document at once, use bulk insert, otherwise use normal insert
+        /// </summary>
+        public int BulkCountThreshold { get; set; }
         
         public DocumentDBMessageImporter()
         {
             QueryPeriod = false;
+            BulkCountThreshold = 10;
         }
 
         //public Table<PropertyData> CreateSchema(ISession session)
@@ -176,6 +182,57 @@ namespace BoostMiddlewareImporter.Database
                 //docCollection.IndexingPolicy.IndexingMode = IndexingMode.None;
                 //docCollection.IndexingPolicy.Automatic = false;
 
+                docCollection.IndexingPolicy.IncludedPaths.Add(new IncludedPath
+                {
+                    Path = "/" + Measurand.TIMESTAMP_NAME + "/?",
+                    Indexes = new Collection<Index> { 
+                                new RangeIndex(DataType.String) { Precision = -1 }, 
+                            }
+                });
+
+                //Timestamp for the 30-Minutes-Interval Avg Value
+                docCollection.IndexingPolicy.IncludedPaths.Add(new IncludedPath
+                { 
+                    Path = "/" + Measurand.TIMESTAMP_NAME + "30" +  "/?",
+                    Indexes = new Collection<Index> { 
+                                new RangeIndex(DataType.String) { Precision = -1 }, 
+                            }
+                });
+
+                docCollection.IndexingPolicy.IncludedPaths.Add(new IncludedPath
+                {
+                    Path = "/" + "name" + "/?",
+                    Indexes = new Collection<Index> { 
+                                new HashIndex(DataType.String) { Precision = -1 }, 
+                            }
+                });
+
+                docCollection.IndexingPolicy.IncludedPaths.Add(new IncludedPath
+                {
+                    Path = "/" + Measurand.EQUIPMENT_NAME + "/?",
+                    Indexes = new Collection<Index> { 
+                                new HashIndex(DataType.String) { Precision = -1 }, 
+                            }
+                });
+
+                docCollection.IndexingPolicy.IncludedPaths.Add(new IncludedPath
+                {
+                    Path = "/" + Measurand.PLANT_NAME + "/?",
+                    Indexes = new Collection<Index> { 
+                                new HashIndex(DataType.String) { Precision = -1 }, 
+                            }
+                });
+
+
+                docCollection.IndexingPolicy.IncludedPaths.Add(new IncludedPath  //add thk 23.08.2016
+                {
+                    Path = "/" + Measurand.EQUIPMENTANDNAME_NAME + "/?",
+                    Indexes = new Collection<Index> { 
+                                new HashIndex(DataType.String) { Precision = -1 }, 
+                            }
+                });
+
+
                 docCollection.IndexingPolicy.ExcludedPaths.Add(
                     new ExcludedPath
                     {
@@ -186,51 +243,6 @@ namespace BoostMiddlewareImporter.Database
                         //    }
                     });
 
-                docCollection.IndexingPolicy.IncludedPaths.Add(new IncludedPath
-                {
-                    Path = "/" + Measurand.TIMESTAMP_NAME + "/?",
-                    Indexes = new Collection<Index> { 
-                                new RangeIndex(DataType.String) { Precision = -1 }, 
-                                //new RangeIndex(DataType.Number) { Precision = -1 }
-                            }
-                });
-
-                //Timestamp for the 30-Minutes-Interval Avg Value
-                docCollection.IndexingPolicy.IncludedPaths.Add(new IncludedPath
-                { 
-                    Path = "/" + Measurand.TIMESTAMP_NAME + "30" +  "/?",
-                    Indexes = new Collection<Index> { 
-                                new RangeIndex(DataType.String) { Precision = -1 }, 
-                                //new RangeIndex(DataType.Number) { Precision = -1 }
-                            }
-                });
-
-                docCollection.IndexingPolicy.IncludedPaths.Add(new IncludedPath
-                {
-                    Path = "/" + "name" + "/?",
-                    Indexes = new Collection<Index> { 
-                                new RangeIndex(DataType.String) { Precision = 10 }, 
-                                //new RangeIndex(DataType.Number) { Precision = -1 }
-                            }
-                });
-
-                docCollection.IndexingPolicy.IncludedPaths.Add(new IncludedPath
-                {
-                    Path = "/" + Measurand.EQUIPMENT_NAME + "/?",
-                    Indexes = new Collection<Index> { 
-                                new RangeIndex(DataType.String) { Precision = 10 }, 
-                                //new RangeIndex(DataType.Number) { Precision = -1 }
-                            }
-                });
-
-                docCollection.IndexingPolicy.IncludedPaths.Add(new IncludedPath
-                {
-                    Path = "/" + Measurand.PLANT_NAME + "/?",
-                    Indexes = new Collection<Index> { 
-                                new RangeIndex(DataType.String) { Precision = 10 }, 
-                                //new RangeIndex(DataType.Number) { Precision = -1 }
-                            }
-                });
 
                 //xPartitionKey
                 if (collectionPartitionKey)
@@ -518,14 +530,42 @@ namespace BoostMiddlewareImporter.Database
             try
             {
                 List<Measurand> measurandList = msgList.Select(x => x.Data).ToList();
-                OperationReponseInfo opInfo = new OperationReponseInfo();
-                int count = await BulkInsertDocumentsAsync(measurandList, _showDebugInfo, opInfo);
+                OperationReponseInfo opInfo = null;
+
+                int count = 0;
+                if (measurandList.Count > BulkCountThreshold)
+                {
+                    
+                    opInfo = new OperationReponseInfo();
+                    count = await BulkInsertDocumentsAsync(measurandList, _showDebugInfo, opInfo);
+
+                    this._recordsThroughput.AddDataCount(count);
+                    this._rusConsumed.AddDataCount(opInfo.OpRequestCharge);
+                }
+                else
+                {
+                    List<Task> taskList = new List<Task>();
+                    foreach (Measurand m in measurandList)
+                    {
+                        opInfo = new OperationReponseInfo();
+                        taskList.Add(InsertDocumentAsync(m, _showDebugInfo, opInfo)
+                            .ContinueWith((t) =>
+                            {
+                                //when one insert is finish, track the operation costs
+                                this._recordsThroughput.AddDataCount(t.Result);
+                                lock (sw)
+                                {
+                                    count += t.Result;
+                                }
+                                this._rusConsumed.AddDataCount(opInfo.OpRequestCharge);
+                            }));
+                    }
+                    await Task.WhenAll(taskList.ToArray());
+                }
+
                 sw.Stop();
-                this._recordsThroughput.AddDataCount(count);
 
-                this._rusConsumed.AddDataCount(opInfo.OpRequestCharge);
-
-                ShowProgress(count, 0 , 0, sw.ElapsedMilliseconds);
+                ShowProgress(count, 0, 0, sw.ElapsedMilliseconds);
 
                 result = count;
             }
@@ -632,6 +672,40 @@ namespace BoostMiddlewareImporter.Database
 
             //Return count of documents loaded
             return documentsLoaded;
+
+        }
+
+
+        private async Task<int> InsertDocumentAsync(Measurand measurand, bool showDebugInfo, OperationReponseInfo opsRespInfo /*, int threadNumber, int iterationNumber */)
+        {
+            RequestOptions requestOptions = new RequestOptions();
+            if (_usePartitionKey && measurand != null) //prevent null pointer exception
+            {
+                requestOptions.PartitionKey = new PartitionKey(measurand.Plant);
+            }
+            Stopwatch clock = new Stopwatch();
+            clock.Start();
+            ResourceResponse<Document> scriptResult = (await ExecuteWithRetries(_client, () => _client.CreateDocumentAsync(_colSelfLink, measurand, requestOptions), _displayHttp429Error)).Item1;
+            clock.Stop();
+
+            int countOfLoadedDocs = 1;
+            double lastRequestCharge = scriptResult.RequestCharge;
+
+            if (opsRespInfo != null)
+            {
+                opsRespInfo.ElapsedMilliseconds = clock.ElapsedMilliseconds;
+                opsRespInfo.OpRequestCharge = lastRequestCharge;
+            }
+
+            //for debug
+            if (true == showDebugInfo)
+            {
+                //Console.WriteLine("{0}\tBulk Insert of {1} documents by Thread:{2} and Iteration:{3}, # of RUs: {4}", DateTime.UtcNow, countOfLoadedDocs, threadNumber, iterationNumber, lastRequestCharge);
+                _msgCache.AddMessage("{0}\tInsert of document, # of RUs: {2}", DateTime.UtcNow, countOfLoadedDocs, lastRequestCharge);
+            }
+
+            //Return count of documents loaded
+            return countOfLoadedDocs;
 
         }
 
@@ -930,7 +1004,7 @@ namespace BoostMiddlewareImporter.Database
             }
             else
             {
-                Console.Write(".");
+                //Console.Write("."); //too much performance cost
             }
 
             if (fillDuration > 0)
@@ -1098,7 +1172,7 @@ namespace BoostMiddlewareImporter.Database
                 _lastQueryOpInfo = new OperationReponseInfo();
                 try
                 {
-                    _lastQueryMeasurandList = await ReadMultiDocumentAsync("1000", "Kessel", "Drehzahl_0", true, _lastQueryOpInfo, 10440 /*batchSize*/);
+                    _lastQueryMeasurandList = await ReadMultiDocumentAsync("1000", "Kessel", "Temp2_0", true, _lastQueryOpInfo, 10440 /*batchSize*/);
 
                     if (this._rusConsumed != null)
                     {

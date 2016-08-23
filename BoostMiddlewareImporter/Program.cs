@@ -721,40 +721,46 @@ namespace BoostMiddlewareImporter
                 }
                 );
 
-            Task avgCalcTask = writeToDatabase.Completion.ContinueWith(async t =>
-            {
-                _logger.Info("do calcing averages...");
+                Task avgCalcTask = null;
 
-                //when all data is written, calculate the averages for all intervals that we inserted.
-                
-
-                DateTime curDate = minDate;
-                
-                curDate = new DateTime(curDate.Year, curDate.Month, curDate.Day, curDate.Hour, curDate.Minute, 0);
-
-                const int INTERVAL = 30;
-                maxDate = maxDate.AddMinutes(INTERVAL); //ensure that the interval with the maxdate is processed too
-
-                /*
-                 *  calc the timeslots between the minDate and maxDate
-                 *  send each timeslot to the calcAverages block that performs the AVG-calcing then
-                 */
-
-                do
+                if (Settings.Default.CalcAvgAfterInsert)
                 {
-                    int restMinutes = curDate.Minute % INTERVAL;
-                    curDate = curDate.AddMinutes(INTERVAL - restMinutes); //TODO!!!thk what happens when restMinutes==0 ???
-                    foreach(var item in processedMeasurands) {
-                        await calcAverages.SendAsync(new Tuple<Tuple<string, string, string>, DateTime, int>(item, curDate, INTERVAL));
-                    }
+                     avgCalcTask = writeToDatabase.Completion.ContinueWith(async t =>
+                     {
+                         _logger.Info("do calcing averages...");
 
-                    _logger.Info(String.Format("Calc averages for {0} different measurands at {1:dd.MM.yyyy HH:mm}", processedMeasurands.Count, curDate));
-                    curDate = curDate.AddMinutes(1);
-                } while (curDate <= maxDate);
+                         //when all data is written, calculate the averages for all intervals that we inserted.
 
-                calcAverages.Complete();
-                _logger.Info("do calcing averages...done");
-            });
+
+                         DateTime curDate = minDate;
+
+                         curDate = new DateTime(curDate.Year, curDate.Month, curDate.Day, curDate.Hour, curDate.Minute, 0);
+
+                         const int INTERVAL = 30;
+                         maxDate = maxDate.AddMinutes(INTERVAL); //ensure that the interval with the maxdate is processed too
+
+                         /*
+                          *  calc the timeslots between the minDate and maxDate
+                          *  send each timeslot to the calcAverages block that performs the AVG-calcing then
+                          */
+
+                         do
+                         {
+                             int restMinutes = curDate.Minute % INTERVAL;
+                             curDate = curDate.AddMinutes(INTERVAL - restMinutes); //TODO!!!thk what happens when restMinutes==0 ???
+                             foreach (var item in processedMeasurands)
+                             {
+                                 await calcAverages.SendAsync(new Tuple<Tuple<string, string, string>, DateTime, int>(item, curDate, INTERVAL));
+                             }
+
+                             _logger.Info(String.Format("Calc averages for {0} different measurands at {1:dd.MM.yyyy HH:mm}", processedMeasurands.Count, curDate));
+                             curDate = curDate.AddMinutes(1);
+                         } while (curDate <= maxDate);
+
+                         calcAverages.Complete();
+                         _logger.Info("do calcing averages...done");
+                     });
+                }
 #endif
 
             foreach (int tableId in Enumerable.Range(batcherRangeStart,batcherRange)) {
@@ -1013,8 +1019,12 @@ namespace BoostMiddlewareImporter
 
 
                         //wait for the avgCalculation Task completed
-                        avgCalcTask.WaitForCompletionStatus();
-                        calcAverages.Completion.Wait(); //add thk 09.08.2016 wait for the calcing ActionBlock to complete before ending the program
+
+                        if (avgCalcTask != null)
+                        {
+                            avgCalcTask.WaitForCompletionStatus();
+                            calcAverages.Completion.Wait(); //add thk 09.08.2016 wait for the calcing ActionBlock to complete before ending the program
+                        }
 
 #if RavenDB
                     documentStores.ForEach(d => d.Dispose()); //dispose document stores

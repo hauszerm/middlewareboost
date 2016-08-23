@@ -101,7 +101,7 @@ namespace BoostMiddlewareImporter.Server
             }
             while (tcpClient != null);
 
-            Task.WaitAll(LogInfo.Values.Select(x => x.Task).ToArray());
+            await Task.WhenAll(LogInfo.Values.Select(x => x.Task).ToArray()); //CHG thk 23.08.2016 use await here now
 
             totalMessagesThroughput = null;
         }

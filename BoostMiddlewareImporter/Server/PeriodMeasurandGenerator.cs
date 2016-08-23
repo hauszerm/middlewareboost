@@ -48,7 +48,8 @@ namespace BoostMiddlewareImporter.Server
                         List<TCPMessage<Measurand>> measurandsToSend = new List<TCPMessage<Measurand>>();
                         PlantConfiguration plantConfig = plantConfigState as PlantConfiguration;
                         DateTime utcStart = DateTime.UtcNow;
-                        while (GenerateMessages && (!cancelToken.IsCancellationRequested))
+                        bool generateMessagesFromThisPlant = true;
+                        while (GenerateMessages && generateMessagesFromThisPlant && (!cancelToken.IsCancellationRequested))
                         {
                             foreach (ClientConfiguration clientConfig in plantConfig.ClientConfig)
                             {
@@ -91,7 +92,7 @@ namespace BoostMiddlewareImporter.Server
                             if (plantConfig.ClientConfig.Select(c => c.NextCycleStartUTC).Min() > utcStart.AddMinutes(_periodMinutes))
                             {
                                 /*we have now generated all measurands for the required period, stop generating more*/
-                                GenerateMessages = false;
+                                generateMessagesFromThisPlant = false;
                             }
                             
                         }; //while GenerateMessages
@@ -104,8 +105,13 @@ namespace BoostMiddlewareImporter.Server
                     _generatedTasks.Add(localTask);
                 }//foreach pConfig in _config
 
-                Task.WaitAll(plantTasks.ToArray());
-                _processor.FinishProcessing(); //inform that processor that no more messages will be generated
+                return Task.WhenAll(plantTasks.ToArray())
+                    .ContinueWith((t) =>
+                    {
+                        /*alle Daten fertig generiert*/
+                        GenerateMessages = false;
+                        _processor.FinishProcessing(); //inform that processor that no more messages will be generated
+                    });
             }
 
             return Task.WhenAll(_generatedTasks);
